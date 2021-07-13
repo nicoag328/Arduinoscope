@@ -1,14 +1,17 @@
 #include <cairo.h>
 #include <gtk/gtk.h>
+#include <unistd.h>
 
 #include "serial.h"
 #include "queue.h"
 
-#define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 720
-#define MEMORY_LIMIT 5160
+#define WINDOW_WIDTH  1920
+#define WINDOW_HEIGHT 1080
+#define MEMORY_LIMIT 10320
 
 struct queue_t queue;
+
+int trigger_level = 100;
 
 static void do_drawing(cairo_t *);
 
@@ -20,6 +23,17 @@ static void get_serial(GtkWidget* window) {
 				insert(&queue, data[1]); 
 		}
 
+}
+
+static gboolean on_click_event(GtkWidget *widget, GdkEventButton *event,
+				gpointer user_data) {
+
+		if (event->button == 1) {
+
+				trigger_level = event->y;
+		}
+
+		return TRUE;
 }
 
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, 
@@ -36,10 +50,17 @@ static void do_drawing(cairo_t *cr)
 		cairo_set_line_width(cr, 2);
 		cairo_move_to(cr, 0, WINDOW_HEIGHT / 2);
 
+		while(!(read_queue(&queue, (MEMORY_LIMIT / 4) + 30) < trigger_level &
+					   	read_queue(&queue, MEMORY_LIMIT / 4) >= trigger_level)) {
+
+				continue;
+
+		} 
+
 		int i;
 		for (i = (MEMORY_LIMIT / 4) - (WINDOW_WIDTH / 2); i <= (MEMORY_LIMIT / 4) + WINDOW_WIDTH - 2; i++ ) {
-				cairo_move_to(cr, i - (MEMORY_LIMIT / 4), (WINDOW_HEIGHT / 2)     + (WINDOW_HEIGHT / 4)- read_queue(&queue, i));
-				cairo_line_to(cr, i - (MEMORY_LIMIT / 4) + 1, (WINDOW_HEIGHT / 2) + (WINDOW_HEIGHT / 4) - read_queue(&queue, i + 1));
+				cairo_move_to(cr, i - (MEMORY_LIMIT / 4), (WINDOW_HEIGHT / 4) * 3 - read_queue(&queue, i));
+				cairo_line_to(cr, i - (MEMORY_LIMIT / 4) + 1, (WINDOW_HEIGHT / 4) * 3 - read_queue(&queue, i + 1));
 		}
 
 		cairo_stroke(cr);    
@@ -70,11 +91,15 @@ int main(int argc, char *argv[])
 
 		g_signal_connect(G_OBJECT(darea), "draw", 
 						G_CALLBACK(on_draw_event), NULL); 
+
+		g_signal_connect(window, "button-press-event",
+						G_CALLBACK(on_click_event), NULL);
+
 		g_signal_connect(window, "destroy",
 						G_CALLBACK(gtk_main_quit), NULL);  
 
 		g_thread_new(NULL, (GThreadFunc) get_serial, window);
-		g_timeout_add(150, (GSourceFunc) gtk_widget_queue_draw, window);
+		g_timeout_add(115, (GSourceFunc) gtk_widget_queue_draw, window);
 		gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 		gtk_window_set_default_size(GTK_WINDOW(window), WINDOW_WIDTH, WINDOW_HEIGHT); 
 		gtk_window_set_title(GTK_WINDOW(window), "Arduinoscope");
