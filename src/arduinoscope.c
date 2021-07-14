@@ -30,7 +30,7 @@ static gboolean on_click_event(GtkWidget *widget, GdkEventButton *event,
 
 		if (event->button == 1) {
 
-				trigger_level = event->y;
+				trigger_level = WINDOW_HEIGHT - WINDOW_HEIGHT / 4 + event->y;
 		}
 
 		return TRUE;
