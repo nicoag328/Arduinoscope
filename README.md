@@ -8,7 +8,7 @@ It consists in two programs, one on the Arduino UNO side that samples the signal
 
 ## Building
 
-To build the Arduino program, you can use the provided `build_arduino.sh` script that requires `arduino-cli`, or open the project under `arduino_src` with the Arduino IDE.
+To build and upload the Arduino program, you can use the provided `build_arduino.sh` and `upload_arduino.sh` scripts that require [arduino-cli](https://github.com/arduino/arduino-cli), or you can  open the project under `arduino_src` with the Arduino IDE.
 
 To build the PC program for Linux you can use the `build_linux.sh` script. It requires the following libraries to be installed on your computer:
 
